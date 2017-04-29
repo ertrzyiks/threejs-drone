@@ -1,0 +1,26 @@
+{
+  "name": "threejs-drone",
+  "version": "1.0.0",
+  "description": "Controllable drone simulation using three.js",
+  "author": "ertrzyiks <mateusz.derks@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "build": "yarn build:clean && yarn build:assets && yarn build:html",
+    "build:clean": "rm -rf ./docs",
+    "build:html": "node script/build.js",
+    "build:assets": "yarn build:copy && webpack --json > stats.json",
+    "build:copy": "mkdir -p docs/ && cp -r assets/* docs/"
+  },
+  "dependencies": {
+    "consolidate": "^0.14.5",
+    "exports-loader": "^0.6.4",
+    "express": "^4.15.2",
+    "nunjucks": "^3.0.0",
+    "script-loader": "^0.7.0",
+    "three": "^0.85.2",
+    "webpack": "^2.4.1",
+    "webpack-dev-middleware": "^1.10.2",
+    "webpack-dev-server": "^2.4.5"
+  }
+}
