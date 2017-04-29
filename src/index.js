@@ -23,6 +23,7 @@ var physicsWorld
 
 var pos = new THREE.Vector3()
 var quat = new THREE.Quaternion()
+var transformAux1 = new Ammo.btTransform()
 
 const gravityConstant = -9.8
 const margin = 0.05;
@@ -86,9 +87,9 @@ function createObjects() {
   })
 
   // Ramp
-  pos.set( 3, 1, 0 )
+  pos.set(3, 10, 0)
   quat.setFromAxisAngle( new THREE.Vector3(0, 0, 1), 30 * Math.PI / 180)
-  var obstacle = createParalellepiped(10, 1, 4, 0, pos, quat, new THREE.MeshPhongMaterial({ color: 0x606060 }))
+  var obstacle = createParalellepiped(10, 1, 4, 1, pos, quat, new THREE.MeshPhongMaterial({ color: 0x606060 }))
   obstacle.castShadow = true
   obstacle.receiveShadow = true
 }
@@ -113,16 +114,16 @@ function updatePhysics( deltaTime ) {
   physicsWorld.stepSimulation( deltaTime, 10 )
 
   // Update rigid bodies
-  for ( var i = 0, il = rigidBodies.length; i < il; i++ ) {
-    var objThree = rigidBodies[ i ];
-    var objPhys = objThree.userData.physicsBody;
-    var ms = objPhys.getMotionState();
-    if ( ms ) {
-      ms.getWorldTransform( transformAux1 );
-      var p = transformAux1.getOrigin();
-      var q = transformAux1.getRotation();
-      objThree.position.set( p.x(), p.y(), p.z() );
-      objThree.quaternion.set( q.x(), q.y(), q.z(), q.w() );
+  for (var i = 0, il = rigidBodies.length; i < il; i++) {
+    var objThree = rigidBodies[i]
+    var objPhys = objThree.userData.physicsBody
+    var ms = objPhys.getMotionState()
+    if (ms) {
+      ms.getWorldTransform(transformAux1)
+      var p = transformAux1.getOrigin()
+      var q = transformAux1.getRotation()
+      objThree.position.set(p.x(), p.y(), p.z())
+      objThree.quaternion.set(q.x(), q.y(), q.z(), q.w())
     }
   }
 }
