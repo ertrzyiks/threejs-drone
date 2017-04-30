@@ -30,9 +30,11 @@ const margin = 0.05;
 
 const clock = new THREE.Clock()
 
-var body
-var motorPower = 11
-var rotorHinge
+var quadcopter
+var rotorHinge1
+var rotorHinge2
+var rotorHinge3
+var rotorHinge4
 
 init()
 animate()
@@ -81,7 +83,7 @@ function createObjects() {
   pos.set(0, - 0.5, 0)
   quat.set(0, 0, 0, 1)
 
-  var ground = createParalellepiped( 40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ) )
+  var ground = createParalellepiped(40, 1, 40, 0, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ))
   ground.castShadow = true
   ground.receiveShadow = true
   textureLoader.load('textures/grid.png', function( texture ) {
@@ -93,25 +95,42 @@ function createObjects() {
   })
 
   // Rotor
-  pos.set(3, 0, 0)
-  body = createParalellepiped(1, 1, 1, 1, pos, quat, new THREE.MeshPhongMaterial({color: 0x606060}))
-  body.castShadow = true
-  body.receiveShadow = true
+  pos.set(0, 0, 0)
+  quadcopter = createParalellepiped(4, 0.1, 4, 10, pos, quat, new THREE.MeshPhongMaterial( { color: 0xFFFFFF } ))
+  quadcopter.castShadow = true
 
-  body.userData.physicsBody.setDamping(0, 1)
+  const {rotorHinge: rotorHingeA} = createRotor(-2, 0, 2, quat, quadcopter)
+  const {rotorHinge: rotorHingeB} = createRotor(-2, 0, -2, quat, quadcopter)
+  const {rotorHinge: rotorHingeC} = createRotor(2, 0, -2, quat, quadcopter)
+  const {rotorHinge: rotorHingeD} = createRotor(2, 0, 2, quat, quadcopter)
+  rotorHinge1 = rotorHingeA
+  rotorHinge2 = rotorHingeB
+  rotorHinge3 = rotorHingeC
+  rotorHinge4 = rotorHingeD
 
-  pos.set(3, 1.1, 0)
-  var pivotA = new Ammo.btVector3(0, 1 * 0.5, 0)
+  // const {body: bodyB,rotorHinge: rotorHingeB} = createRotor(2, 1, -2, quat)
+  // rotorHinge2 = rotorHingeB
+  //
+  // const {body: bodyC,rotorHinge: rotorHingeC} = createRotor(-2, 1, 2, quat)
+  // rotorHinge3 = rotorHingeC
+  //
+  // const {body: bodyD,rotorHinge: rotorHingeD} = createRotor(2, 1, 2, quat)
+  // rotorHinge4 = rotorHingeD
+}
+
+function createRotor(x, y, z, quat, target) {
+  pos.set(x, y, z)
+  var pivotA = new Ammo.btVector3(x, 0.05, z)
   var pivotB = new Ammo.btVector3(0, -0.1 * 0.5, 0)
   const axis = new Ammo.btVector3(0, 1, 0)
   const rotor = createParalellepiped(2.5, 0.1, 0.1, 1, pos, quat, new THREE.MeshPhongMaterial({color: 0x000000}))
-  rotor.userData.physicsBody.setDamping(0, 0)
-  rotorHinge = new Ammo.btHingeConstraint(body.userData.physicsBody, rotor.userData.physicsBody, pivotA, pivotB, axis, true)
+  const rotorHinge = new Ammo.btHingeConstraint(target.userData.physicsBody, rotor.userData.physicsBody, pivotA, pivotB, axis, true)
   physicsWorld.addConstraint(rotorHinge, true)
 
-  // setInterval(() => {
-  //   body.userData.physicsBody.applyCentralForce(new Ammo.btVector3(0, 500, 0))
-  // }, 3000)
+  return {
+    rotor,
+    rotorHinge
+  }
 }
 
 function createParalellepiped(sx, sy, sz, mass, pos, quat, material) {
@@ -130,8 +149,14 @@ function render() {
 }
 
 function updatePhysics(deltaTime) {
-  body.userData.physicsBody.applyCentralForce(new Ammo.btVector3(0, 20, 0))
-  rotorHinge.enableAngularMotor(true, 1.5 * 30, 50)
+  quadcopter.userData.physicsBody.applyForce(new Ammo.btVector3(0, 35, 0), new Ammo.btVector3(2, 0, 2))
+  quadcopter.userData.physicsBody.applyForce(new Ammo.btVector3(0, 35, 0), new Ammo.btVector3(-2, 0, 2))
+  quadcopter.userData.physicsBody.applyForce(new Ammo.btVector3(0, 35, 0), new Ammo.btVector3(2, 0, -2))
+  quadcopter.userData.physicsBody.applyForce(new Ammo.btVector3(0, 35, 0), new Ammo.btVector3(-2, 0, -2))
+  rotorHinge1.enableAngularMotor(true, 1.5 * 30, 50)
+  rotorHinge2.enableAngularMotor(true, -1.5 * 30, 50)
+  rotorHinge3.enableAngularMotor(true, 1.5 * 30, 50)
+  rotorHinge4.enableAngularMotor(true, -1.5 * 30, 50)
 
   // Step world
   physicsWorld.stepSimulation( deltaTime, 10 )
