@@ -30,6 +30,10 @@ const margin = 0.05;
 
 const clock = new THREE.Clock()
 
+var body
+var motorPower = 11
+var rotorHinge
+
 init()
 animate()
 
@@ -42,6 +46,8 @@ function init() {
   initGraphics()
   initPhysics()
   createObjects()
+
+  camera.lookAt(new THREE.Vector3(0, 0, 0))
 
   const container = document.getElementById('container')
   container.innerHTML = ''
@@ -86,18 +92,26 @@ function createObjects() {
     ground.material.needsUpdate = true
   })
 
-  // Ramp
-  pos.set(3, 10, 0)
-  quat.setFromAxisAngle(new THREE.Vector3(0, 0, 1), 30 * Math.PI / 180)
-  var obstacle = createParalellepiped(10, 1, 4, 1, pos, quat, new THREE.MeshPhongMaterial({ color: 0x606060 }))
-  obstacle.castShadow = true
-  obstacle.receiveShadow = true
+  // Rotor
+  pos.set(3, 0, 0)
+  body = createParalellepiped(1, 1, 1, 1, pos, quat, new THREE.MeshPhongMaterial({color: 0x606060}))
+  body.castShadow = true
+  body.receiveShadow = true
 
-  console.log(obstacle.userData.physicsBody.applyCentralForce.toString())
+  body.userData.physicsBody.setDamping(0, 1)
 
-  setInterval(() => {
-    obstacle.userData.physicsBody.applyCentralForce(new Ammo.btVector3(0, 500, 0))
-  }, 3000)
+  pos.set(3, 1.1, 0)
+  var pivotA = new Ammo.btVector3(0, 1 * 0.5, 0)
+  var pivotB = new Ammo.btVector3(0, -0.1 * 0.5, 0)
+  const axis = new Ammo.btVector3(0, 1, 0)
+  const rotor = createParalellepiped(2.5, 0.1, 0.1, 1, pos, quat, new THREE.MeshPhongMaterial({color: 0x000000}))
+  rotor.userData.physicsBody.setDamping(0, 0)
+  rotorHinge = new Ammo.btHingeConstraint(body.userData.physicsBody, rotor.userData.physicsBody, pivotA, pivotB, axis, true)
+  physicsWorld.addConstraint(rotorHinge, true)
+
+  // setInterval(() => {
+  //   body.userData.physicsBody.applyCentralForce(new Ammo.btVector3(0, 500, 0))
+  // }, 3000)
 }
 
 function createParalellepiped(sx, sy, sz, mass, pos, quat, material) {
@@ -115,7 +129,10 @@ function render() {
   renderer.render(scene, camera)
 }
 
-function updatePhysics( deltaTime ) {
+function updatePhysics(deltaTime) {
+  body.userData.physicsBody.applyCentralForce(new Ammo.btVector3(0, 20, 0))
+  rotorHinge.enableAngularMotor(true, 1.5 * 30, 50)
+
   // Step world
   physicsWorld.stepSimulation( deltaTime, 10 )
 
@@ -162,10 +179,10 @@ function createRigidBody(threeObject, physicsShape, mass, pos, quat) {
   return body;
 }
 
-window.addEventListener( 'resize', onWindowResize, false );
+window.addEventListener('resize', onWindowResize, false)
 
 function onWindowResize() {
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize( window.innerWidth, window.innerHeight );
+  camera.aspect = window.innerWidth / window.innerHeight
+  camera.updateProjectionMatrix()
+  renderer.setSize( window.innerWidth, window.innerHeight )
 }
